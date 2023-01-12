@@ -1,19 +1,34 @@
+import configparser
+import os
+import sys
+import pathlib
 import boto3
 
 class AWS:
     def __init__(self):
-        self.client = None
+        self.s3 = None
+        self.s3_res = None
         self.pwd = ''
         self.current_bucket = ''
+
+        config = configparser.ConfigParser()
+        config.read("S5-S3.conf")
+        aws_access_key_id = config['default']['aws_access_key_id']
+        aws_access_secret_access_key = config['default']['aws_access_secret_access_key']
         
         print("Welcome to AWS S3 Storage Shell (S5)")
         try:
-            self.client = boto3.client('s3')
+            session = boto3.Session(
+                aws_access_key_id=aws_access_key_id,
+                aws_secret_access_key=aws_access_secret_access_key
+            )
+            self.s3 = session.client('s3')
+            self.s3_res = session.resource('s3')
         except Exception as e:
             print("You could not be connected to your S3 storage")
             print("Please review procedures for authenticating your account on AWS S3")
             exit(0)
-        print(f"You are now connected to your S3 storage on region {self.client.meta.region_name}")
+        print(f"You are now connected to your S3 storage on region {self.s3.meta.region_name}")
         
     # Copy local file to cloud location
     def locs3cp(self):
@@ -26,7 +41,8 @@ class AWS:
     # Create bucket
     def create_bucket(self, bucket_name):
         try:
-            self.client.create_bucket(Bucket=bucket_name)
+            # Check for bucket config defaults
+            self.s3.create_bucket(Bucket=bucket_name, CreateBucketConfiguration={'LocationConstraint': 'ca-central-1'})
         except Exception as e:
             print("Error msg")
             return 1
@@ -53,7 +69,7 @@ class AWS:
                 
         # print(f"bucket = {bucket_name} , key = {key}")
         try:
-            self.client.put_object(Bucket=bucket_name, Key=key)
+            self.s3.put_object(Bucket=bucket_name, Key=key)
         except Exception as e:
             print({e})
             print("Cannont create directory")
@@ -87,7 +103,7 @@ class AWS:
     # list buckets, directories, objects
     def list_buckets(self):
         print("Buckets: ")
-        response = self.client.list_buckets()['Buckets']
+        response = self.s3.list_buckets()['Buckets']
         print(response)
         # for bucket in response['Buckets']:
         #     print(f'  {bucket["Name"]}')
@@ -101,16 +117,17 @@ class AWS:
         pass
     
     # Delete bucket
+    # Should we empty bucket then delete or just throw error for buckets with content?
     def delete_bucket(self, bucket_name):
         try:
-            self.client.delete_bucket(Bucket=bucket_name)
+            self.s3.delete_bucket(Bucket=bucket_name)
         except Exception as e:
             print("Cannont create bucket")
             return 1
         return 0 
 
     def list_contents(self, bucket_name):
-        for key in self.client.list_objects(Bucket=bucket_name)['Contents']:
+        for key in self.s3.list_objects(Bucket=bucket_name)['Contents']:
             print(key['Key'])
     
     
