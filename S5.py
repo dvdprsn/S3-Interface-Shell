@@ -128,15 +128,21 @@ class AWS:
         # self.s3_res.Object(self.current_bucket, path)
         if path.parts[0] == '/':
             bucket_name = path.parts[1]
-            key = str(pathlib.Path(*path.parts[2:])) + '/'
+            key = str(pathlib.Path(*path.parts[2:]))
+            if path.suffix == '':
+                key = key + '/'
+
         # Relative Path (eg - video/cats)
         else:
             full_path = self.cwd / path
             bucket_name = self.current_bucket
             key = str(pathlib.Path(*full_path.parts[2:])) + '/'
 
-        print(f"Path = {key}, current bucket= {bucket_name}")
-        self.s3_res.Object(bucket_name, key).delete()
+        try:
+            print(f"Path = {key}, current bucket= {bucket_name}")
+            self.s3_res.Object(bucket_name, key).delete()
+        except Exception as e:
+            print(f"Unable to delete path {e}")
         # pass
 
     # Delete bucket
@@ -153,26 +159,44 @@ class AWS:
     def list_contents(self, bucket_name):
         for key in self.s3.list_objects(Bucket=bucket_name)['Contents']:
             print(key['Key'])
+ # Will use for moving locations in file system and validating that new loc exists
+
+    def object_exists(self, path):
+
+        if path.parts[0] == '/':
+            bucket_name = path.parts[1]
+            key = str(pathlib.Path(*path.parts[2:])) + '/'
+        # Relative Path (eg - video/cats)
+        else:
+            full_path = self.cwd / path
+            bucket_name = self.current_bucket
+            key = str(pathlib.Path(*full_path.parts[2:]))
+        # print(f"Key = {key} bucket = {bucket_name}")
+        try:
+            bucket = self.s3_res.Bucket(bucket_name)
+            for obj in bucket.objects.all():
+                # print(f"comparing {key} v. {obj.key}")
+                if key in obj.key:
+                    print("File path exists in system")
+                    return 0
+        except Exception as e:
+            print(e)
+        return 1
 
 
 def main():
     s3_client = AWS()
     # Testing Paths, Direct and relative
-    path = pathlib.Path('/dpears04b02/videos/cats/test')
+    path = pathlib.Path('/dpears04b02/videos/cats/test/readme.md')
     path2 = pathlib.Path('extra/read/all/about')
-
-    # * Step back one USE LATER
-    # print(path.parent)
-
+    path_exists = pathlib.Path('/dpears04b02/videos')
     # ! Testing for creating folders
-    # s3_client.create_folder(path)
 
     s3_client.cwd = pathlib.Path('/dpears04b02')
     s3_client.current_bucket = 'dpears04b02'
-    # s3_client.create_folder(path2)
-    # s3_client.s3delete(path)
-    # s3_client.locs3cp('readme.md', path)
-    s3_client.locs3cp('readme.md', path2)
+    s3_client.create_folder(path_exists)
+    s3_client.s3delete(path_exists)
+
     # ! Main loop
     # while True:
     #     cmd = input("S3> ")
