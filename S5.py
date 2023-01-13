@@ -137,11 +137,11 @@ def main():
     # print(path.parent)
 
     # ! Testing for creating folders
-    s3_client.create_folder(path)
+    # s3_client.create_folder(path)
 
     s3_client.cwd = pathlib.Path('/dpears04b02')
     s3_client.current_bucket = 'dpears04b02'
-    s3_client.create_folder(path2)
+    # s3_client.create_folder(path2)
 
     # ! Main loop
     # while True:
