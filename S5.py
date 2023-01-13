@@ -36,9 +36,25 @@ class AWS:
             f"You are now connected to your S3 storage on region {self.s3.meta.region_name}")
 
     # Copy local file to cloud location
+    def locs3cp(self, local_file, path):
+        object_name = os.path.basename(local_file)
 
-    def locs3cp(self):
-        pass
+        if path.parts[0] == '/':
+            bucket_name = path.parts[1]
+            key = str(pathlib.Path(*path.parts[2:])) + '/'
+        # Relative Path (eg - video/cats)
+        else:
+            full_path = self.cwd / path
+            bucket_name = self.current_bucket
+            key = str(pathlib.Path(*full_path.parts[2:])) + '/'
+        try:
+            self.s3.upload_file(
+                local_file, bucket_name, key + object_name)
+        except Exception as e:
+            print("Error msg")
+            print(e)
+            return 1
+        return 0
 
     # Copy cloud object to local file system
     def s3loccp(self):
@@ -108,8 +124,20 @@ class AWS:
         pass
 
     # delete object
-    def s3delete(self):
-        pass
+    def s3delete(self, path):
+        # self.s3_res.Object(self.current_bucket, path)
+        if path.parts[0] == '/':
+            bucket_name = path.parts[1]
+            key = str(pathlib.Path(*path.parts[2:])) + '/'
+        # Relative Path (eg - video/cats)
+        else:
+            full_path = self.cwd / path
+            bucket_name = self.current_bucket
+            key = str(pathlib.Path(*full_path.parts[2:])) + '/'
+
+        print(f"Path = {key}, current bucket= {bucket_name}")
+        self.s3_res.Object(bucket_name, key).delete()
+        # pass
 
     # Delete bucket
     # ? Should we empty bucket then delete or just throw error for buckets with content?
@@ -117,7 +145,7 @@ class AWS:
         try:
             self.s3.delete_bucket(Bucket=bucket_name)
         except Exception as e:
-            print("Cannont create bucket!")
+            print("Cannont delete bucket!")
             print(e)
             return 1
         return 0
@@ -142,7 +170,9 @@ def main():
     s3_client.cwd = pathlib.Path('/dpears04b02')
     s3_client.current_bucket = 'dpears04b02'
     # s3_client.create_folder(path2)
-
+    # s3_client.s3delete(path)
+    # s3_client.locs3cp('readme.md', path)
+    s3_client.locs3cp('readme.md', path2)
     # ! Main loop
     # while True:
     #     cmd = input("S3> ")
