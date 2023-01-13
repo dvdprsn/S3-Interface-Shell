@@ -29,6 +29,7 @@ class AWS:
         except Exception as e:
             print("You could not be connected to your S3 storage")
             print("Please review procedures for authenticating your account on AWS S3")
+            print(e)
             exit(0)
         print(
             f"You are now connected to your S3 storage on region {self.s3.meta.region_name}")
@@ -51,6 +52,7 @@ class AWS:
                                   'LocationConstraint': 'ca-central-1'})
         except Exception as e:
             print("Error msg")
+            print(e)
             return 1
         return 0
 
@@ -114,7 +116,8 @@ class AWS:
         try:
             self.s3.delete_bucket(Bucket=bucket_name)
         except Exception as e:
-            print("Cannont create bucket")
+            print("Cannont create bucket!")
+            print(e)
             return 1
         return 0
 
@@ -145,10 +148,10 @@ def main():
     #     if cmd == "exit" or cmd == "quit":
     #         print("Exiting S5")
     #         exit(0)
-
+    #
     #     if "create_bucket" in cmd:
     #         s3_client.create_bucket(pathlib.Path(cmd))
-
+    #
     #     if "create_folder" in cmd:
     #         s3_client.create_folder(pathlib.Path(cmd))
 
