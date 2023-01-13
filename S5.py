@@ -8,6 +8,7 @@ import boto3
 class AWS:
 
     def __init__(self):
+
         self.s3 = None
         self.s3_res = None
         self.cwd = pathlib.Path('/')
