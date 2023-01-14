@@ -39,14 +39,8 @@ class AWS:
     def locs3cp(self, local_file, path):
         object_name = os.path.basename(local_file)
 
-        if path.parts[0] == '/':
-            bucket_name = path.parts[1]
-            key = str(pathlib.Path(*path.parts[2:])) + '/'
-        # Relative Path (eg - video/cats)
-        else:
-            full_path = self.cwd / path
-            bucket_name = self.current_bucket
-            key = str(pathlib.Path(*full_path.parts[2:])) + '/'
+        bucket_name = split_path(1, self.current_bucket, self.cwd, path)
+        key = split_path(0, self.current_bucket, self.cwd, path)
         try:
             self.s3.upload_file(
                 local_file, bucket_name, key + object_name)
@@ -77,18 +71,10 @@ class AWS:
     # Create directory/folder
     def create_folder(self, path):
         # Direct path (eg - /[bucketname]/video/cats)
-        if path.parts[0] == '/':
-            bucket_name = path.parts[1]
-            key = str(pathlib.Path(*path.parts[2:])) + '/'
-        # Relative Path (eg - video/cats)
-        else:
-            full_path = self.cwd / path
-            bucket_name = self.current_bucket
-            key = str(pathlib.Path(*full_path.parts[2:])) + '/'
+        bucket_name = split_path(1, self.current_bucket, self.cwd, path)
+        key = split_path(0, self.current_bucket, self.cwd, path)
 
-        # print(f"bucket = {bucket_name} , key = {key}")
         try:
-            # pass
             # self.s3.put_object(Bucket=bucket_name, Key=key)
             print("Creating a new folder!")
             print(f"bucket = {bucket_name} , key = {key}")
@@ -128,25 +114,14 @@ class AWS:
 
     # delete object
     def s3delete(self, path):
-        # self.s3_res.Object(self.current_bucket, path)
-        if path.parts[0] == '/':
-            bucket_name = path.parts[1]
-            key = str(pathlib.Path(*path.parts[2:]))
-            if path.suffix == '':
-                key = key + '/'
-
-        # Relative Path (eg - video/cats)
-        else:
-            full_path = self.cwd / path
-            bucket_name = self.current_bucket
-            key = str(pathlib.Path(*full_path.parts[2:])) + '/'
+        bucket_name = split_path(1, self.current_bucket, self.cwd, path)
+        key = split_path(0, self.current_bucket, self.cwd, path)
 
         try:
             print(f"Path = {key}, current bucket= {bucket_name}")
             self.s3_res.Object(bucket_name, key).delete()
         except Exception as e:
             print(f"Unable to delete path {e}")
-        # pass
 
     # Delete bucket
     # ? Should we empty bucket then delete or just throw error for buckets with content?
@@ -162,19 +137,12 @@ class AWS:
     def list_contents(self, bucket_name):
         for key in self.s3.list_objects(Bucket=bucket_name)['Contents']:
             print(key['Key'])
- # Will use for moving locations in file system and validating that new loc exists
 
+ # Will use for moving locations in file system and validating that new loc exists
     def object_exists(self, path):
 
-        if path.parts[0] == '/':
-            bucket_name = path.parts[1]
-            key = str(pathlib.Path(*path.parts[2:])) + '/'
-        # Relative Path (eg - video/cats)
-        else:
-            full_path = self.cwd / path
-            bucket_name = self.current_bucket
-            key = str(pathlib.Path(*full_path.parts[2:]))
-        # print(f"Key = {key} bucket = {bucket_name}")
+        bucket_name = split_path(1, self.current_bucket, self.cwd, path)
+        key = split_path(0, self.current_bucket, self.cwd, path)
         try:
             bucket = self.s3_res.Bucket(bucket_name)
             for obj in bucket.objects.all():
@@ -185,3 +153,27 @@ class AWS:
         except Exception as e:
             print(e)
         return 1
+
+
+def split_path(b_out, current_bucket, cwd, path):
+
+    if path.parts[0] == '/':
+        bucket_name = path.parts[1]
+        key = str(pathlib.Path(*path.parts[2:]))
+        # Append slash if its a folder
+        if path.suffix == '':
+            key = key + '/'
+
+    # Relative Path (eg - video/cats)
+    else:
+        full_path = cwd / path
+        bucket_name = current_bucket
+        key = str(pathlib.Path(*full_path.parts[2:]))
+    # append slash if its a folder
+        if path.suffix == '':
+            key = key + '/'
+
+    if b_out == 1:
+        return bucket_name
+    else:
+        return key

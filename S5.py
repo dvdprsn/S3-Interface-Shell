@@ -9,14 +9,14 @@ import aws_helper
 def main():
     s3_client = aws_helper.AWS()
     # Testing Paths, Direct and relative
-    path = pathlib.Path('/dpears04b02/videos/cats/test/readme.md')
+    path = pathlib.Path('/dpears04b02/videos/cats/test/readme')
     path2 = pathlib.Path('extra/read/all/about')
     path_exists = pathlib.Path('/dpears04b02/videos')
     # ! Testing for creating folders
 
     s3_client.cwd = pathlib.Path('/dpears04b02')
     s3_client.current_bucket = 'dpears04b02'
-    s3_client.create_folder(path_exists)
+    s3_client.create_folder(path)
     # s3_client.s3delete(path_exists)
 
     # ! Main loop
