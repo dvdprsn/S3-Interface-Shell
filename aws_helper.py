@@ -52,8 +52,14 @@ class AWS:
 
     # Copy cloud object to local file system
     def s3loccp(self, local_file, path):
-
-        pass
+        bucket_name = split_path(1, self.current_bucket, self.cwd, path)
+        key = split_path(0, self.current_bucket, self.cwd, path)
+        try:
+            self.s3.download_file(bucket_name, key, local_file)
+        except Exception as e:
+            print(f"failed to download {e}")
+            return 1
+        return 0
 
     # Create bucket
     def create_bucket(self, path):
