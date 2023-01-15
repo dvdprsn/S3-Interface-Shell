@@ -14,9 +14,12 @@ def main():
     path_exists = pathlib.Path('/dpears04b02/videos')
     # ! Testing for creating folders
 
+    src_path = pathlib.Path('/dpears04b02/images/cats/pichappycat.png')
+    dest_path = pathlib.Path('d/t/pic001.png')
     s3_client.cwd = pathlib.Path('/dpears04b02')
     s3_client.current_bucket = 'dpears04b02'
     s3_client.create_folder(path)
+    s3_client.s3copy(src_path, dest_path)
     # s3_client.s3delete(path_exists)
 
     # ! Main loop

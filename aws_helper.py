@@ -37,13 +37,12 @@ class AWS:
 
     # Copy local file to cloud location
     def locs3cp(self, local_file, path):
-        object_name = os.path.basename(local_file)
-
-        bucket_name = split_path(1, self.current_bucket, self.cwd, path)
-        key = split_path(0, self.current_bucket, self.cwd, path)
+        bucket_name = split_path(1, self, path)
+        key = split_path(0, self, path)
         try:
+            # Upload the local file from user system to object path 'key'
             self.s3.upload_file(
-                local_file, bucket_name, key + object_name)
+                local_file, bucket_name, key)
         except Exception as e:
             print("Error msg")
             print(e)
@@ -52,8 +51,8 @@ class AWS:
 
     # Copy cloud object to local file system
     def s3loccp(self, local_file, path):
-        bucket_name = split_path(1, self.current_bucket, self.cwd, path)
-        key = split_path(0, self.current_bucket, self.cwd, path)
+        bucket_name = split_path(1, self, path)
+        key = split_path(0, self, path)
         try:
             self.s3.download_file(bucket_name, key, local_file)
         except Exception as e:
@@ -77,8 +76,8 @@ class AWS:
     # Create directory/folder
     def create_folder(self, path):
         # Direct path (eg - /[bucketname]/video/cats)
-        bucket_name = split_path(1, self.current_bucket, self.cwd, path)
-        key = split_path(0, self.current_bucket, self.cwd, path)
+        bucket_name = split_path(1, self, path)
+        key = split_path(0, self, path)
 
         try:
             # self.s3.put_object(Bucket=bucket_name, Key=key)
@@ -115,13 +114,29 @@ class AWS:
         #     print(f'  {bucket["Name"]}')
 
     # copy objects
-    def s3copy(self):
-        pass
+    def s3copy(self, path, new_path):
+        bucket_name = split_path(1, self, path)
+        key = split_path(0, self, path)
+        copy_source = {'Bucket': bucket_name, 'Key': key}
+
+        dest_bucket_name = split_path(1, self, new_path)
+        dest_key = split_path(0, self, new_path)
+        try:
+            # self.s3.copy_object(Bucket=dest_bucket_name,
+            #                     CopySource=copy_source, Key=dest_key)
+            # self.s3.delete_object(Bucket=bucket_name, Key=key)
+
+            print(f"src bucket: {bucket_name} src key: {key}")
+            print(f"dest bucket: {dest_bucket_name} dest key: {dest_key}")
+        except Exception as e:
+            print(f"Failed to copy file to new S3 loc {e}")
+            return 1
+        return 0
 
     # delete object
     def s3delete(self, path):
-        bucket_name = split_path(1, self.current_bucket, self.cwd, path)
-        key = split_path(0, self.current_bucket, self.cwd, path)
+        bucket_name = split_path(1, self, path)
+        key = split_path(0, self, path)
 
         try:
             print(f"Path = {key}, current bucket= {bucket_name}")
@@ -131,7 +146,9 @@ class AWS:
 
     # Delete bucket
     # ? Should we empty bucket then delete or just throw error for buckets with content?
+
     def delete_bucket(self, bucket_name):
+        # Grab bucket_name from the path stucture thats passed in
         try:
             self.s3.delete_bucket(Bucket=bucket_name)
         except Exception as e:
@@ -145,23 +162,26 @@ class AWS:
             print(key['Key'])
 
  # Will use for moving locations in file system and validating that new loc exists
-    def object_exists(self, path):
-
-        bucket_name = split_path(1, self.current_bucket, self.cwd, path)
-        key = split_path(0, self.current_bucket, self.cwd, path)
-        try:
-            bucket = self.s3_res.Bucket(bucket_name)
-            for obj in bucket.objects.all():
-                # print(f"comparing {key} v. {obj.key}")
-                if key in obj.key:
-                    print("File path exists in system")
-                    return 0
-        except Exception as e:
-            print(e)
-        return 1
 
 
-def split_path(b_out, current_bucket, cwd, path):
+def object_exists(aws, path):
+
+    bucket_name = split_path(1, aws.current_bucket, aws.cwd, path)
+    key = split_path(0, aws.current_bucket, aws.cwd, path)
+    try:
+        bucket = aws.s3_res.Bucket(bucket_name)
+
+        for obj in bucket.objects.all():
+            # print(f"comparing {key} v. {obj.key}")
+            if key in obj.key:
+                print("File path exists in system")
+                return 0
+    except Exception as e:
+        print(e)
+    return 1
+
+
+def split_path(b_out, aws, path):
 
     if path.parts[0] == '/':
         bucket_name = path.parts[1]
@@ -171,9 +191,10 @@ def split_path(b_out, current_bucket, cwd, path):
             key = key + '/'
 
     # Relative Path (eg - video/cats)
+    # ! ERROR CHECK IF REL PATH IS USED BUT NO DRIVE IS SELECTED
     else:
-        full_path = cwd / path
-        bucket_name = current_bucket
+        full_path = aws.cwd / path
+        bucket_name = aws.current_bucket
         key = str(pathlib.Path(*full_path.parts[2:]))
     # append slash if its a folder
         if path.suffix == '':
