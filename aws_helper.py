@@ -103,7 +103,7 @@ class AWS:
 
     # current working directory or location
     def cwlocn(self):
-        print(f"/{self.cwd}")
+        print(f"{self.cwd}")
 
     # list buckets, directories, objects
     def list_buckets(self):
@@ -164,10 +164,19 @@ class AWS:
  # Will use for moving locations in file system and validating that new loc exists
 
 
+def exec_sys_cmd(command):
+    try:
+        os.system(command)
+    except Exception as e:
+        print(f"{e}")
+        return 1
+    return 0
+
+
 def object_exists(aws, path):
 
-    bucket_name = split_path(1, aws.current_bucket, aws.cwd, path)
-    key = split_path(0, aws.current_bucket, aws.cwd, path)
+    bucket_name = split_path(1, aws, path)
+    key = split_path(0, aws, path)
     try:
         bucket = aws.s3_res.Bucket(bucket_name)
 
