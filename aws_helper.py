@@ -41,8 +41,12 @@ class AWS:
         key = split_path(0, self, path)
         try:
             # Upload the local file from user system to object path 'key'
-            self.s3.upload_file(
-                local_file, bucket_name, key)
+            print("copy local to cloud (upload)")
+            print(
+                f"Local_file = {local_file} bucket_name = {bucket_name} key = {key}")
+
+            # self.s3.upload_file(
+            #     local_file, bucket_name, key)
         except Exception as e:
             print("Error msg")
             print(e)
@@ -54,7 +58,11 @@ class AWS:
         bucket_name = split_path(1, self, path)
         key = split_path(0, self, path)
         try:
-            self.s3.download_file(bucket_name, key, local_file)
+            # self.s3.download_file(bucket_name, key, local_file)
+            print("Copy from cloud object to local files (Download)")
+            print(
+                f"Bucket Name = {bucket_name} Key = {key} local_file = {local_file}")
+
         except Exception as e:
             print(f"failed to download {e}")
             return 1
@@ -65,8 +73,10 @@ class AWS:
         bucket_name = path.parts[1]
         try:
             # Check for bucket config defaults
-            self.s3.create_bucket(Bucket=bucket_name, CreateBucketConfiguration={
-                                  'LocationConstraint': 'ca-central-1'})
+            print("Create bucket")
+            print(f"Bucket name = {bucket_name}")
+            # self.s3.create_bucket(Bucket=bucket_name, CreateBucketConfiguration={
+            #                       'LocationConstraint': 'ca-central-1'})
         except Exception as e:
             print("Error msg")
             print(e)
@@ -81,6 +91,7 @@ class AWS:
 
         try:
             # self.s3.put_object(Bucket=bucket_name, Key=key)
+
             print("Creating a new folder!")
             print(f"bucket = {bucket_name} , key = {key}")
         except Exception as e:
@@ -139,18 +150,23 @@ class AWS:
         key = split_path(0, self, path)
 
         try:
+            print("Delete obj")
             print(f"Path = {key}, current bucket= {bucket_name}")
-            self.s3_res.Object(bucket_name, key).delete()
+            # self.s3_res.Object(bucket_name, key).delete()
+
         except Exception as e:
             print(f"Unable to delete path {e}")
 
     # Delete bucket
     # ? Should we empty bucket then delete or just throw error for buckets with content?
 
-    def delete_bucket(self, bucket_name):
+    def delete_bucket(self, path):
+        bucket_name = split_path(1, self, path)
         # Grab bucket_name from the path stucture thats passed in
         try:
-            self.s3.delete_bucket(Bucket=bucket_name)
+            # self.s3.delete_bucket(Bucket=bucket_name)
+            print("Delete bucket")
+            print(f"bucket name = {bucket_name}")
         except Exception as e:
             print("Cannont delete bucket!")
             print(e)
