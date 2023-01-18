@@ -3,8 +3,28 @@
 import pathlib
 import aws_helper
 import shlex
+import readline
 
 # Check Response from S3 requests to make the errors since they wont always throw
+
+
+def print_help():
+
+    print("----Command Help----")
+    print("exit -> terminate shell")
+    print(
+        "locs3cp [local path] [S3 path] -> copy local file to remote S3 location")
+    print("s3loccp [S3 path] [local path] -> copy remote S3 file to local")
+    print("chlocn [path] -> navigate directory space")
+    print("cwlocn -> output current working directory")
+    print("list [-l] -> list current directory contents or specify")
+    print("s3copy [org path] [new path] -> move file within S3 remote space")
+    print("s3delete [path] -> delete an object from the bucket")
+    print("delete_bucket [path]-> delete a bucket")
+    print("create_bucket [path] -> create a new bucket")
+    print("create_folder [path] -> create a new folder")
+    print("for any other input command is passed to system shell")
+    print("--------")
 
 
 def main():
@@ -24,7 +44,7 @@ def main():
         # ex. chlocn "/bucket-name/image folder/cats"
 
         cmd = shlex.split(cmd_og)
-        if cmd[0] == "exit" or cmd == "quit":
+        if cmd[0] == "exit" or cmd[0] == "quit":
             print("Exiting S5")
             exit(0)
         elif "create_bucket" in cmd:
@@ -58,6 +78,8 @@ def main():
         elif "delete_bucket" in cmd:
             # bucket_name
             s3_client.delete_bucket(pathlib.Path(cmd[1]))
+        elif ":h" in cmd or ":help" in cmd:
+            print_help()
         else:
             aws_helper.exec_sys_cmd(cmd_og)
 
