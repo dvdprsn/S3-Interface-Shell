@@ -37,6 +37,9 @@ class AWS:
 
     # Copy local file to cloud location
     def locs3cp(self, local_file, path):
+        if self.current_bucket == '':
+            print("Must be in bucket!")
+            return 1
         bucket_name = split_path(1, self, path)
         key = split_path(0, self, path)
         try:
@@ -55,6 +58,9 @@ class AWS:
 
     # Copy cloud object to local file system
     def s3loccp(self, local_file, path):
+        if self.current_bucket == '':
+            print("Must be in bucket!")
+            return 1
         bucket_name = split_path(1, self, path)
         key = split_path(0, self, path)
         try:
@@ -85,6 +91,9 @@ class AWS:
 
     # Create directory/folder
     def create_folder(self, path):
+        if self.current_bucket == '':
+            print("Must be in bucket!")
+            return 1
         # Direct path (eg - /[bucketname]/video/cats)
         bucket_name = split_path(1, self, path)
         key = split_path(0, self, path)
@@ -102,17 +111,31 @@ class AWS:
 
     # change directory
     def chlocn(self, path):
-        # Has not entered bucket dir
-        if len(self.cwd.parts) == 1:
-            # Check if bucket exists before changing
-            print(self.s3.head_bucket(Bucket="dpears04b2"))
+        # Set default values
+        new_cwd = self.cwd
+        new_bucket = self.current_bucket
+        # ! Error when at root and do 'chlocn cats'
+        if path.parts[0] == '/' and len(path.parts) == 1 or path.parts[0] == '~':
+            new_cwd = '/'
+            new_bucket = ''
+        elif '..' in path.parts:
+            for _ in range(path.parts.count('..')):
+                new_cwd = new_cwd.parent
+            if len(new_cwd.parts) == 1:
+                new_bucket = ''
+        else:
+            bucket_name = split_path(1, self, path)
+            if bucket_name == '':
+                return 1
+            key = split_path(0, self, path)
+            new_path = pathlib.Path('/'+bucket_name+'/'+key)
 
-        # Once we have validated that the path exists we can append
-        # ! This will need to be changed depending on type of change
-        self.cwd = self.cwd / path
-        pass
+            new_bucket = bucket_name
+            new_cwd = new_path
+    # ! Check if new bucket and cwd exists before setting
+        self.cwd = new_cwd
+        self.current_bucket = new_bucket
 
-    # current working directory or location
     def cwlocn(self):
         print(f"{self.cwd}")
 
@@ -126,6 +149,9 @@ class AWS:
 
     # copy objects
     def s3copy(self, path, new_path):
+        if self.current_bucket == '':
+            print("Must be in bucket!")
+            return 1
         bucket_name = split_path(1, self, path)
         key = split_path(0, self, path)
         copy_source = {'Bucket': bucket_name, 'Key': key}
@@ -146,6 +172,9 @@ class AWS:
 
     # delete object
     def s3delete(self, path):
+        if self.current_bucket == '':
+            print("Must be in bucket!")
+            return 1
         bucket_name = split_path(1, self, path)
         key = split_path(0, self, path)
 
@@ -208,13 +237,15 @@ def object_exists(aws, path):
 
 def split_path(b_out, aws, path):
 
-    if path.parts[0] == '/':
+    if len(path.parts) == 1 and path.parts[0] == '/':
+        bucket_name = ''
+        key = '/'
+    elif path.parts[0] == '/':
         bucket_name = path.parts[1]
         key = str(pathlib.Path(*path.parts[2:]))
         # Append slash if its a folder
         if path.suffix == '':
             key = key + '/'
-
     # Relative Path (eg - video/cats)
     # ! ERROR CHECK IF REL PATH IS USED BUT NO DRIVE IS SELECTED
     else:
@@ -224,8 +255,9 @@ def split_path(b_out, aws, path):
     # append slash if its a folder
         if path.suffix == '':
             key = key + '/'
-
     if b_out == 1:
         return bucket_name
     else:
+        if key == './':
+            return ''
         return key

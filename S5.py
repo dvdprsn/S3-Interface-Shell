@@ -38,7 +38,7 @@ def main():
     #
     # ! Main loop
     while True:
-        cmd_og = input("S3> ")
+        cmd_og = input(f"{s3_client.cwd} % S3> ")
         # We use shlex here to ensure that paths like '/test/example path/readme.md'
         # is not split over the space in the path so long as it is put in quotes
         # ex. chlocn "/bucket-name/image folder/cats"
