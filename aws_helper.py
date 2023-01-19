@@ -110,6 +110,7 @@ class AWS:
         return 0
 
     # change directory
+    # ! MUST BE ABLE TO HANDLE ../PATH
     def chlocn(self, path):
         # Set default values
         new_cwd = self.cwd
@@ -119,6 +120,9 @@ class AWS:
             new_cwd = '/'
             new_bucket = ''
         elif '..' in path.parts:
+            # Change this to for each part
+            # Then if .. move to parent
+            # else move into dir
             for _ in range(path.parts.count('..')):
                 new_cwd = new_cwd.parent
             if len(new_cwd.parts) == 1:
