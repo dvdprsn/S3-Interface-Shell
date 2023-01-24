@@ -116,6 +116,8 @@ class AWS:
         new_cwd = self.cwd
         new_bucket = self.current_bucket
         # ! Error when at root and do 'chlocn cats'
+        if len(path.parts) == 0:
+            return 1
         if path.parts[0] == '/' and len(path.parts) == 1 or path.parts[0] == '~':
             new_cwd = '/'
             new_bucket = ''
@@ -123,8 +125,11 @@ class AWS:
             # Change this to for each part
             # Then if .. move to parent
             # else move into dir
-            for _ in range(path.parts.count('..')):
-                new_cwd = new_cwd.parent
+            for i in range(len(path.parts)):
+                if path.parts[i] == "..":
+                    new_cwd = new_cwd.parent
+                else:
+                    new_cwd = new_cwd / path.parts[i]
             if len(new_cwd.parts) == 1:
                 new_bucket = ''
         else:
@@ -139,17 +144,19 @@ class AWS:
     # ! Check if new bucket and cwd exists before setting
         self.cwd = new_cwd
         self.current_bucket = new_bucket
+        return 0
 
     def cwlocn(self):
         print(f"{self.cwd}")
 
     # list buckets, directories, objects
+
     def list_buckets(self):
         print("Buckets: ")
         response = self.s3.list_buckets()['Buckets']
-        print(response)
-        # for bucket in response['Buckets']:
-        #     print(f'  {bucket["Name"]}')
+        # print(response)
+        for bucket in response['Buckets']:
+            print(f'  {bucket["Name"]}')
 
     # copy objects
     def s3copy(self, path, new_path):

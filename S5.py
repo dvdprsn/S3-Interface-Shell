@@ -35,7 +35,7 @@ def main():
     # Add better error checking for inputs
     # Ensure that a bucket is selected before other cmds are execd
     # Expand error messages
-    #
+    # Catch return values to output detailed error msg after cmd
     # ! Main loop
     while True:
         cmd_og = input(f"{s3_client.cwd} % S3> ")
