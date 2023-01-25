@@ -210,6 +210,7 @@ class AWS:
         if bucket_name != '':
             try:
                 my_bucket = self.s3_res.Bucket(bucket_name)
+                # ! CONSIDER USING DELIMITER = '/' to prevent depth in returned list
                 for object_summary in my_bucket.objects.filter(Prefix=key):
                     if perms == 1:
                         print(
