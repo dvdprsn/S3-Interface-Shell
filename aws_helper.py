@@ -94,28 +94,23 @@ class AWS:
         if self.current_bucket == '':
             print("Must be in bucket!")
             return 1
-        # Direct path (eg - /[bucketname]/video/cats)
         bucket_name = split_path(1, self, path)
         key = split_path(0, self, path)
-
         try:
             self.s3.put_object(Bucket=bucket_name, Key=key)
-
             print("Creating a new folder!")
             print(f"bucket = {bucket_name} , key = {key}")
         except Exception as e:
-            print({e})
+            print(f"{e}")
             print("Cannont create directory")
             return 1
         return 0
 
     # change directory
-    # ! MUST BE ABLE TO HANDLE ../PATH
     def chlocn(self, path):
         # Set default values
         new_cwd = self.cwd
         new_bucket = self.current_bucket
-        # ! Error when at root and do 'chlocn cats'
         if len(path.parts) == 0:
             print("Error: must specify a path")
             return 1
@@ -126,9 +121,6 @@ class AWS:
             self.current_bucket = new_bucket
             return 0
         elif '..' in path.parts:
-            # Change this to for each part
-            # Then if .. move to parent
-            # else move into dir
             for i in range(len(path.parts)):
                 if path.parts[i] == "..":
                     new_cwd = new_cwd.parent
@@ -146,10 +138,8 @@ class AWS:
 
             new_bucket = bucket_name
             new_cwd = new_path
-        print(f"{new_cwd}")
     # ! Check if new bucket and cwd exists before setting
         if object_exists(self, new_cwd) == 0:
-
             self.cwd = new_cwd
             self.current_bucket = new_bucket
             return 0
@@ -158,8 +148,6 @@ class AWS:
 
     def cwlocn(self):
         print(f"{self.cwd}")
-
-    # list buckets, directories, objects
 
     # copy objects
     def s3copy(self, path, new_path):
@@ -203,11 +191,8 @@ class AWS:
             print(f"Unable to delete path {e}")
 
     # Delete bucket
-    # ? Should we empty bucket then delete or just throw error for buckets with content?
-
     def delete_bucket(self, path):
         bucket_name = split_path(1, self, path)
-        # Grab bucket_name from the path stucture thats passed in
         try:
             self.s3.delete_bucket(Bucket=bucket_name)
             print("Delete bucket")
@@ -240,7 +225,6 @@ class AWS:
 
 
 def list_buckets(aws):
-    print("Buckets: ")
     s3 = aws.s3_res
     try:
         for bucket in s3.buckets.all():
@@ -266,6 +250,7 @@ def object_exists(aws, path):
         bucket = aws.s3_res.Bucket(bucket_name)
     except Exception as e:
         print(f"{e}")
+        return 1
 
     if key != "":
         try:

@@ -31,11 +31,12 @@ def main():
     s3_client = aws_helper.AWS()
 
     # ! TODOS:
-    # Create a help cmd
     # Add better error checking for inputs
-    # Ensure that a bucket is selected before other cmds are execd
     # Expand error messages
     # Catch return values to output detailed error msg after cmd
+    # verbose list for bucket permissions
+    # clean output of object permissions
+
     # ! Main loop
     while True:
         cmd_og = input(f"{s3_client.cwd} % S3> ")
@@ -43,7 +44,11 @@ def main():
         # is not split over the space in the path so long as it is put in quotes
         # ex. chlocn "/bucket-name/image folder/cats"
 
-        cmd = shlex.split(cmd_og)
+        try:
+            cmd = shlex.split(cmd_og)
+        except Exception as e:
+            print(f"Failed to process command, try again {e}")
+            continue
         if cmd[0] == "exit" or cmd[0] == "quit":
             print("Exiting S5")
             exit(0)
