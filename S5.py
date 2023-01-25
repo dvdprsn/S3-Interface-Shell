@@ -23,7 +23,7 @@ def print_help():
     print("delete_bucket [path]-> delete a bucket")
     print("create_bucket [path] -> create a new bucket")
     print("create_folder [path] -> create a new folder")
-    print("for any other input command is passed to system shell")
+    print("for any other input command is continueed to system shell")
     print("--------")
 
 
@@ -48,35 +48,68 @@ def main():
             print("Exiting S5")
             exit(0)
         elif "create_bucket" in cmd:
+            if len(cmd) < 2:
+                print("invalid argument length")
+                continue
             # path
             s3_client.create_bucket(pathlib.Path(cmd[1]))
         elif "create_folder" in cmd:
             # path
+            if len(cmd) < 2:
+                print("invalid argument length")
+                continue
             s3_client.create_folder(pathlib.Path(cmd[1]))
         elif "locs3cp" in cmd:
             # local_file, path
+            if len(cmd) < 3:
+                print("invalid argument length")
+                continue
             s3_client.locs3cp(pathlib.Path(cmd[1]), pathlib.Path(cmd[2]))
         elif "s3loccp" in cmd:
             # local_file, path
+            if len(cmd) < 3:
+                print("invalid argument length")
+                continue
             s3_client.s3loccp(pathlib.Path(cmd[2]), pathlib.Path(cmd[1]))
         elif "chlocn" in cmd:
             # path
+            if len(cmd) < 2:
+                print("invalid argument length")
+                continue
             s3_client.chlocn(pathlib.Path(cmd[1]))
         elif "cwlocn" in cmd:
             # nothing
             s3_client.cwlocn()
         elif "list" in cmd:
             # NOT DONE YET
-            # ! TODO
-            s3_client.list_buckets()
+            path = pathlib.Path()
+            verb = 0
+            if '-l' in cmd:
+                verb = 1
+                if len(cmd) > 2:
+                    path = pathlib.Path(cmd[2])
+            elif len(cmd) > 1:
+                path = pathlib.Path(cmd[1])
+
+            s3_client.list_all(path, verb)
         elif "s3copy" in cmd:
+            if len(cmd) < 3:
+                print("invalid argument length")
+                continue
             # path, new_path
+
             s3_client.s3copy(pathlib.Path(cmd[1]), pathlib.Path(cmd[2]))
         elif "s3delete" in cmd:
+            if len(cmd) < 2:
+                print("invalid argument length")
+                continue
             # path
             s3_client.s3delete(pathlib.Path(cmd[1]))
         elif "delete_bucket" in cmd:
             # bucket_name
+            if len(cmd) < 2:
+                print("invalid argument length")
+                continue
             s3_client.delete_bucket(pathlib.Path(cmd[1]))
         elif ":h" in cmd or ":help" in cmd:
             print_help()
