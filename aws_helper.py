@@ -214,24 +214,40 @@ class AWS:
                 for object_summary in my_bucket.objects.filter(Prefix=key):
                     if perms == 1:
                         print(
-                            f"{object_summary.key} --> {self.s3_res.ObjectAcl(bucket_name, object_summary.key).grants}")
+                            f"{object_summary.key} --> {self.s3_res.ObjectAcl(bucket_name, object_summary.key).grants[0]['Permission']}")
                     else:
                         print(object_summary.key)
             except Exception as e:
                 print(f"{e}")
                 return 1
         else:
-            list_buckets(self)
- # Will use for moving locations in file system and validating that new loc exists
+            list_buckets(self, perms)
+
+    # Just for testing the split_path function
+    def test_split(self, path):
+        print(f"{path.parts}")
+        print(path)
+        key = split_path(0, self, path)
+        print(key)
+
+# List all the buckets in the users S3 account
 
 
-def list_buckets(aws):
+def list_buckets(aws, verbose):
+    # Get S3 resource
     s3 = aws.s3_res
     try:
+        # Output all the buckets in the S3 dir
         for bucket in s3.buckets.all():
-            print(bucket.name)
+            if verbose == 1:
+                print(
+                    f"{bucket.name} --> {s3.BucketAcl(bucket.name).grants[0]['Permission']}")
+            else:
+                print(bucket.name)
     except Exception as e:
         print(f"{e}")
+
+# For system command execution
 
 
 def exec_sys_cmd(command):
@@ -244,17 +260,20 @@ def exec_sys_cmd(command):
 
 
 def object_exists(aws, path):
-
+    # split bucketname and key from the input path
     bucket_name = split_path(1, aws, path)
     key = split_path(0, aws, path)
-    try:
-        bucket = aws.s3_res.Bucket(bucket_name)
-    except Exception as e:
-        print(f"{e}")
+    # get bucket resource
+    bucket = aws.s3_res.Bucket(bucket_name)
+    # Simple error check, returns None if the bucket doesnt exists
+    if not bucket.creation_date:
         return 1
-
+    # For when we move around within a buckets contents
+    # Loop over the buckets objects and ensure object exists
     if key != "":
         try:
+            # !NOTE - This doesnt scale well at all
+            # Maybe change to objects.filter but idk if that saves resources
             for obj in bucket.objects.all():
                 if key in obj.key:
                     return 0
@@ -267,12 +286,15 @@ def object_exists(aws, path):
 
 
 def split_path(b_out, aws, path):
+    # if path is empty - used mostly for list
     if len(path.parts) == 0:
         bucket_name = aws.current_bucket
         key = str(pathlib.Path(*aws.cwd.parts[2:]))
+    # if path is the root
     elif len(path.parts) == 1 and path.parts[0] == '/':
         bucket_name = ''
         key = '/'
+    # If its a direct path
     elif path.parts[0] == '/':
         bucket_name = path.parts[1]
         key = str(pathlib.Path(*path.parts[2:]))
@@ -280,7 +302,6 @@ def split_path(b_out, aws, path):
         if path.suffix == '':
             key = key + '/'
     # Relative Path (eg - video/cats)
-    # ! ERROR CHECK IF REL PATH IS USED BUT NO DRIVE IS SELECTED
     else:
         full_path = aws.cwd / path
         bucket_name = aws.current_bucket
@@ -288,9 +309,11 @@ def split_path(b_out, aws, path):
     # append slash if its a folder
         if path.suffix == '':
             key = key + '/'
+    # change output depending on flag
     if b_out == 1:
         return bucket_name
     else:
+        # Cleans the output
         if key == './' or key == ".":
             return ''
         return key
