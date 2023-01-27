@@ -102,7 +102,6 @@ def main():
                 print("invalid argument length")
                 continue
             # path, new_path
-
             s3_client.s3copy(pathlib.Path(cmd[1]), pathlib.Path(cmd[2]))
         elif "s3delete" in cmd:
             if len(cmd) < 2:
