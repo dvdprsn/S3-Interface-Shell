@@ -185,8 +185,11 @@ class AWS:
         try:
             print("Delete obj")
             print(f"Path = {key}, current bucket= {bucket_name}")
-            self.s3_res.Object(bucket_name, key).delete()
+            # ! check if object exists before delete
+            # DONT PRINT RESP
+            resp = self.s3_res.Object(bucket_name, key).delete()
 
+            # print(resp)
         except Exception as e:
             print(f"Unable to delete path {e}")
 
