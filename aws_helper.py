@@ -286,7 +286,6 @@ def object_exists(aws, path):
     # For when we move around within a buckets contents
     if key != "":
         try:
-            # ! KEEP AN EYE ON THIS MIGHT NOT WORK
             for obj in bucket.objects.all():
                 if key in obj.key:
                     return 0

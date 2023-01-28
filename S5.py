@@ -110,8 +110,6 @@ def main():
             s3_client.delete_bucket(pathlib.Path(cmd[1]))
         elif ":h" in cmd or ":help" in cmd:
             print_help()
-        elif "test" in cmd:
-            s3_client.test_split(pathlib.Path(cmd[1]))
         else:
             aws_helper.exec_sys_cmd(cmd_og)
 
