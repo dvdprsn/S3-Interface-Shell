@@ -79,7 +79,6 @@ def main():
             # nothing
             s3_client.cwlocn()
         elif "list" in cmd:
-            # NOT DONE YET
             path = pathlib.Path()
             verb = 0
             if '-l' in cmd:
