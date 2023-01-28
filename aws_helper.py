@@ -21,7 +21,8 @@ class AWS:
         try:
             session = boto3.Session(
                 aws_access_key_id=aws_access_key_id,
-                aws_secret_access_key=aws_secret_access_key
+                aws_secret_access_key=aws_secret_access_key,
+                region_name='ca-central-1'
             )
             self.s3 = session.client('s3')
             self.s3_res = session.resource('s3')
@@ -35,17 +36,13 @@ class AWS:
 
     # Copy local file to cloud location
     def locs3cp(self, local_file, path):
-        # if self.current_bucket == '':
-        #     print("Must be in bucket!")
-        #     return 1
+        if self.current_bucket == '':
+            print("Must be in bucket!")
+            return 1
         bucket_name = split_path(1, self, path)
         key = split_path(0, self, path)
         try:
             # Upload the local file from user system to object path 'key'
-            print("copy local to cloud (upload)")
-            # print(
-            # f"Local_file = {local_file} bucket_name = {bucket_name} key = {key}")
-
             self.s3.upload_file(
                 local_file, bucket_name, key)
         except Exception as e:
@@ -62,8 +59,6 @@ class AWS:
         key = split_path(0, self, path)
         try:
             self.s3.download_file(bucket_name, key, local_file)
-            print("Copy from cloud object to local files (Download)")
-
         except Exception as e:
             print(f"failed to download {e}")
             return 1
@@ -74,11 +69,9 @@ class AWS:
         bucket_name = split_path(1, self, path)
         try:
             # Check for bucket config defaults
-            print("Create bucket")
             self.s3.create_bucket(Bucket=bucket_name, CreateBucketConfiguration={
                                   'LocationConstraint': 'ca-central-1'})
         except Exception as e:
-            print("Error msg")
             print(e)
             return 1
         return 0
@@ -92,10 +85,8 @@ class AWS:
         key = split_path(0, self, path)
         try:
             self.s3.put_object(Bucket=bucket_name, Key=key)
-            print("Creating a new folder!")
         except Exception as e:
             print(f"{e}")
-            print("Cannont create directory")
             return 1
         return 0
 
@@ -127,6 +118,9 @@ class AWS:
             # If we step back far enough remove bucket
             if len(new_cwd.parts) == 1:
                 new_bucket = ''
+                self.current_bucket = new_bucket
+                self.cwd = new_cwd
+                return 0
         # For standard cases
         else:
             bucket_name = split_path(1, self, path)
@@ -163,15 +157,13 @@ class AWS:
 
         dest_bucket_name = split_path(1, self, new_path)
         dest_key = split_path(0, self, new_path)
+        # We want to ensure that file extentions are maintained across the copy
         if (new_path.suffix == '' and path.suffix != '') or (new_path.suffix != '' and path.suffix == ''):
             print("Error could not copy, must maintain a file extention")
             return 1
         try:
             self.s3.copy_object(Bucket=dest_bucket_name,
                                 CopySource=copy_source, Key=dest_key)
-
-            # print(f"src bucket: {bucket_name} src key: {key}")
-            # print(f"dest bucket: {dest_bucket_name} dest key: {dest_key}")
         except Exception as e:
             print(f"Failed to copy file to new S3 loc {e}")
             return 1
@@ -190,7 +182,7 @@ class AWS:
             try:
                 self.s3.head_object(Bucket=bucket_name, Key=key)
             except:
-                print("Failed to locate file")
+                print("Error: Failed to locate or directory is not empty!")
                 return 1
             self.s3_res.Object(bucket_name, key).delete()
         except Exception as e:
@@ -203,8 +195,6 @@ class AWS:
         bucket_name = split_path(1, self, path)
         try:
             self.s3.delete_bucket(Bucket=bucket_name)
-            print("Delete bucket")
-            # print(f"bucket name = {bucket_name}")
         except Exception as e:
             print("Cannont delete bucket!")
             print(e)
@@ -220,23 +210,37 @@ class AWS:
                     Bucket=bucket_name, Prefix=key, Delimiter='/')
                 try:
                     for o in res.get("CommonPrefixes"):
+                        folder_trimmed = o.get('Prefix').replace(key, "")
+                        if len(folder_trimmed) == 0:
+                            continue
                         if perms == 1:
-                            print("TODO")
+                            folder_data = ''
+                            # Sometimes ObjectACL will not return anything, in such case we must catch it
+                            try:
+                                folder_data = self.s3_res.ObjectAcl(
+                                    bucket_name, o.get('Prefix')).grants[0]['Permission']
+                            except:
+                                pass
+                            print(
+                                f"{folder_trimmed}  {folder_data}")
                         else:
-                            print(o.get("Prefix").replace(key, ""))
+                            print(folder_trimmed)
                 except:
                     pass
                 try:
                     for o in res.get("Contents"):
-
+                        object_trimmed = o.get('Key').replace(key, "")
+                        if len(object_trimmed) == 0:
+                            continue
                         if perms == 1:
                             print(
-                                f"{o.get('Key').replace(key, '')}  {o.get('LastModified')}  {o.get('Size')} bytes")
+                                f"{object_trimmed}  {o.get('LastModified')}  {o.get('Size')} bytes")
                         else:
-                            print(o.get("Key").replace(key, ""))
+                            print(object_trimmed)
                 except:
                     pass
             except Exception:
+                print("Failed to list directory contents!")
                 return 1
         else:
             list_buckets(self, perms)
@@ -252,7 +256,7 @@ def list_buckets(aws, verbose):
         for bucket in s3.buckets.all():
             if verbose == 1:
                 print(
-                    f"{bucket.name} --> {s3.BucketAcl(bucket.name).grants[0]['Permission']}")
+                    f"{bucket.name}  {s3.BucketAcl(bucket.name).grants[0]['Permission']}")
             else:
                 print(bucket.name)
     except Exception as e:
@@ -282,7 +286,6 @@ def object_exists(aws, path):
     # For when we move around within a buckets contents
     if key != "":
         try:
-            # aws.s3.head_object(Bucket=bucket_name, Key=key)
             # ! KEEP AN EYE ON THIS MIGHT NOT WORK
             for obj in bucket.objects.all():
                 if key in obj.key:

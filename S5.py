@@ -30,16 +30,9 @@ def print_help():
 def main():
     s3_client = aws_helper.AWS()
 
-    # ! TODOS:
-    # Add better error checking for inputs
-    # Expand error messages
-    # Catch return values to output detailed error msg after cmd
-    # verbose list for bucket permissions
-    # clean output of object permissions
-
     # ! Main loop
     while True:
-        cmd_og = input(f"{s3_client.cwd} % S3> ")
+        cmd_og = input(f"{s3_client.cwd} % S5> ")
         # We use shlex here to ensure that paths like '/test/example path/readme.md'
         # is not split over the space in the path so long as it is put in quotes
         # ex. chlocn "/bucket-name/image folder/cats"

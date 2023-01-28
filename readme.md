@@ -13,4 +13,5 @@ use `:h` or `:help` for commands
 
 ## Limitations
 
--
+- If ObjectACL data is not available, nothing will be output for the -l flag for the list command except for the folder name
+- - This is a result of how subfolders are treated in S3
