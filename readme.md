@@ -27,7 +27,7 @@ It will look for a `[default]` profile.
 
 use `:h` or `:help` for command options
 
-## Behaviour
+## Behaviour & Cool Features
 Upon startup you will encounter the S5 shell prompt as follows: 
 
 `/ % S5> `
@@ -44,11 +44,15 @@ Upon command success nothing is returned, on failure the error message from Boto
 
 Use `exit` to exit the shell
 
-Any commands not recognized by S5 shell is passed off to the OS shell, typically Bash
+Any commands not recognized by S5 shell is passed off to the OS shell.
 
 Relative paths can be used as `./path/to/object` or simply `path/to/object`
 
-`chlocn ../../images` is a viable command 
+`chlocn ../../images` is a viable command
+
+`shlex.split` is used to parse the input command, as a result it should be able to handle local directories that contain spaces. These must be surrounded by quotations however - only necessary with local files with spaces, otherwise everything functions per the spec. I can't imagine there will ever be much use for this, but I really did try to make this as robust as possible.
+
+The shell will actually maintain a local command history! After running various command, just like Bash you can use the arrow keys to cycle through previously executed commands.
 
 ## Limitations 
 - `chlocn` validates if the new path exists before alowing the user to navigate there. Initially, inorder to be efficient with requests the head_bucket() function was used as this only makes a single request and would scale efficiently. However, this meant that nested subdirectories would not be visible as they are not 'head objects'. As such, the validation now checks the new directory against all keys in the S3 bucket. This will not scale well as bucket objects increases beyond the scope of this project.
@@ -56,6 +60,5 @@ Relative paths can be used as `./path/to/object` or simply `path/to/object`
   - This is a result of how subfolders are treated in S3
   - Only 'head objects' will have a return value from ObjectAcl() 
 - In a similar fashion to how Bash handles errors, when something goes wrong, error messages are the output of the expection thrown by Boto3. Usually these messages are very clear. 
-- Very basic input validation. Bash will let you try to execute anything and isn't responsible for ensuring the proper inputs. Despite this to improve usability there is input validation that ensures that the correct number of arguments are passed in at the very least. 
 - For `list -l` the data Boto3 offers on details is fairly limited, for buckets, this will only output the permission level. Similarly for folders.
 - Sometimes s3delete will not return an error if it was unable to delete an object. This is a result that Boto3 doesnt offer any return value that indicates failure. The simple fix for this would be checking if the object exists after a delete attempt, but with a limited number of requests with AWS this wouldnt work for the sake of this project. 
