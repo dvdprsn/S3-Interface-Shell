@@ -14,9 +14,12 @@ class AWS:
         config = configparser.ConfigParser()
         config.read("S5-S3.conf")
         # Configured for the default profile!!
-        aws_access_key_id = config['default']['aws_access_key_id']
-        aws_secret_access_key = config['default']['aws_secret_access_key']
-
+        try:
+            aws_access_key_id = config['default']['aws_access_key_id']
+            aws_secret_access_key = config['default']['aws_secret_access_key']
+        except:
+            print("Configuration not found!")
+            exit(0)
         print("Welcome to AWS S3 Storage Shell (S5)")
         try:
             session = boto3.Session(
