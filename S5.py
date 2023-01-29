@@ -39,6 +39,8 @@ def main():
 
         try:
             cmd = shlex.split(cmd_og)
+            if len(cmd) == 0:
+                continue
         except Exception as e:
             print(f"Failed to process command, try again {e}")
             continue
