@@ -1,8 +1,6 @@
-# CIS\*4010 AWS S3 Shell
+# AWS S3 Python Shell
 
 David Pearson
-dpears04@uoguelph.ca
-1050197
 
 ### Requirements
 
